@@ -24,6 +24,45 @@ using namespace std;
 // #define TRAP_high 1
 // #define TRAP_low 0.9
 
+// #define TRAP_K 5
+// #define TRAP_high 1
+// #define TRAP_low 0.8
+
+static inline double folded_trap6(int u) {
+    // constexpr int K = 6;
+    // 夾在 [0, K] 範圍內以避免越界
+    if (u == 0){
+        return 1.0;
+    }else if (u == 1){
+        return 0.0;
+    }else if (u == 2){
+        return 0.4;
+    }else if (u == 3){
+        return 0.8;
+    }else if (u == 4){
+        return 0.4;
+    }else if (u == 5){
+        return 0.0;
+    }else if (u == 6){
+        return 1.0;
+    }
+   
+    return -1000000;
+}
+
+// static inline double trap6(int u) {
+//     constexpr int K = 6;
+//     if (u < 0) u = 0;
+//     if (u > K) u = K;
+//     return ;
+// }
+
+// static inline double trap_linear_deceptive(int u, int K, double high, double low) {
+//     if (u == K) return high;
+//     // 防止除以 0；K 至少要 2（K=6 會 OK）
+//     const double denom = static_cast<double>(K - 1);
+//     return low + (high - low) * ((static_cast<double>(K - 1 - u)) / denom);
+// }
 
 double calculate_segment_onemax_weak(const string& segment, const string& method) {
         double weak_fiteness = 0;
@@ -74,22 +113,15 @@ double calculate_segment_fitness(const string& segment, const string& method) {
         const double slope = static_cast<double>(TRAP_low) / (k - 1);
         return TRAP_low - z * slope;
     }
-}
+    }else if (method == "ftrap") {
+    int u = std::count(segment.begin(), segment.end(), '1');
+    if ((int)segment.size() != 6) {
+        cerr << "Error: ftrap expects segment length = 6" << endl;
+        exit(1);
+    }
+    return folded_trap6(u);
+    }
 
-
-    // }else if (method == "zerotrap") {
-    //     int zeros = count(segment.begin(), segment.end(), '0');
-    //     // cout << "segment.length(): " << segment.length() << endl;
-    //     if (zeros == segment.length()) {
-    //         return TRAP_high;
-    //     } else if (zeros == 0) {
-    //         return TRAP_low;
-    //     } else {
-    //         result = ((TRAP_K-1) - zeros) * (TRAP_low / ((TRAP_K-1) - 1));
-
-
-    //         return result;
-    //     }
     else if (method == "niah") {
         return all_of(segment.begin(), segment.end(), [](char bit) { return bit == '1'; }) ? 1.0 : 0.0;
     }
@@ -767,94 +799,190 @@ static std::vector<std::vector<std::pair<int,bool>>> clauses = {
         }
 
         return static_cast<double>(sat);
+    }else if (method == "cycftrap") {
+    const int FTRAP_K = 6;
+    if (chromosome.length() % (FTRAP_K - 1) != 0) {
+        cerr << "Error: Chromosome length must be a multiple of FTRAP_K-1 for cycftrap" << endl;
+        exit(1);
+    }
+    if (chromosome.length() <= FTRAP_K) {
+        cerr << "Error: Chromosome length must be greater than FTRAP_K for cycftrap" << endl;
+        exit(1);
     }
 
-        
-    // else if (method == "max3sat_unit_and_random") {
-    //     int n = chromosome.size();
-    //     if (n < 1) {
-    //         cerr << "Error: max3sat_random_unique requires chromosome size >= 1\n";
-    //         exit(1);
-    //     }
+    int segment_length = FTRAP_K;
+    int overlap = 1;
+    double total_fitness = 0.0;
 
-    //     int extra_clauses = n;  // 額外隨機子句數，可自行調整
+    for (size_t i = 0; i < chromosome.length(); i += segment_length - overlap) {
+        string segment;
+        if (i + segment_length <= chromosome.length()) {
+            segment = chromosome.substr(i, segment_length);
+        } else {
+            segment = chromosome.substr(i) +
+                      chromosome.substr(0, segment_length - (chromosome.length() - i));
+        }
+        total_fitness += calculate_segment_fitness(segment, "ftrap");
+    }
+    return total_fitness;
+    }else if (method == "cycftrap_half") {
+    const int FTRAP_K = 6;
+    static bool printed = false;
+    int div = 2; // 只允許「一半以上」的 0（或 1）門檻，與你 cyctrap_half 一致
 
-    //     static unsigned seed = std::random_device{}();
-    //     static std::mt19937 rng(seed);
+    if (!printed) {
+        if (chromosome.length() % (FTRAP_K - 1) != 0) {
+            cerr << "Error: Chromosome length must be a multiple of FTRAP_K-1 for cycftrap_half" << endl;
+            exit(1);
+        }
+        cout << "k = " << FTRAP_K << endl;
+        cout << "m = " << chromosome.length() / (FTRAP_K - 1) << endl;
+        cout << "div = " << div << endl;
+        printed = true;
+    }
 
-    //     static int built_n = -1;
-    //     static std::string target;
-    //     static std::vector<std::array<std::pair<int,bool>,3>> clauses;
+    string& chromosome_deep_copy = const_cast<string&>(chromosome);
 
-    //     if (built_n != n) {
-    //         built_n = n;
-    //         clauses.clear();
+    // 與你 B 版本一致：限制 0 的數量不得超過 length / div；超過就直接 -1
+    int zero_count = count(chromosome_deep_copy.begin(), chromosome_deep_copy.end(), '0');
+    if (zero_count > static_cast<int>(chromosome_deep_copy.length()) / div) {
+        return -1;
+    }
 
-    //         // === 生成唯一解 target ===
-    //         target.resize(n);
-    //         std::uniform_int_distribution<int> bit01(0, 1);
-    //         for (int i = 0; i < n; ++i) target[i] = bit01(rng) ? '1' : '0';
+    int segment_length = FTRAP_K;
+    int overlap = 1;
+    double total_fitness = 0.0;
 
-    //         // === 強制 unit 子句 (唯一解) ===
-    //         for (int i = 0; i < n; ++i) {
-    //             bool pos = (target[i] == '1');
-    //             clauses.push_back({ std::make_pair(i, pos),
-    //                                 std::make_pair(i, pos),
-    //                                 std::make_pair(i, pos) });
-    //         }
+    for (size_t i = 0; i < chromosome_deep_copy.length(); i += segment_length - overlap) {
+        string segment;
+        if (i + segment_length <= chromosome_deep_copy.length()) {
+            segment = chromosome_deep_copy.substr(i, segment_length);
+        } else {
+            segment = chromosome_deep_copy.substr(i) +
+                      chromosome_deep_copy.substr(0, segment_length - (chromosome_deep_copy.length() - i));
+        }
+        total_fitness += calculate_segment_fitness(segment, "ftrap");
+    }
+    return total_fitness;
+    }else if (method == "1-0_cycftrap") {
+    const int FTRAP_K = 6;
+    static bool printed = false;
 
-    //         // === 加上隨機 3 子句 ===
-    //         std::uniform_int_distribution<int> var_dist(0, n - 1);
-    //         for (int c = 0; c < extra_clauses; ++c) {
-    //             std::array<std::pair<int,bool>,3> cl;
-    //             for (int j = 0; j < 3; ++j) {
-    //                 int v = var_dist(rng);
-    //                 bool sign = bit01(rng);
-    //                 cl[j] = { v, sign };
-    //             }
-    //             clauses.push_back(cl);
-    //         }
+    if (!printed) {
+        if (chromosome.length() % (FTRAP_K - 1) != 0) {
+            cerr << "Error: Chromosome length must be a multiple of FTRAP_K-1 for 1-0_cycftrap" << endl;
+            exit(1);
+        }
+        cout << "k = " << FTRAP_K << endl;
+        cout << "m = " << chromosome.length() / (FTRAP_K - 1) << endl;
+        printed = true;
+    }
 
-    //         // === 印出資訊 ===
-    //         cout << "=== Random 3SAT with UNIQUE optimum ===\n";
-    //         cout << "Seed = " << seed << "\n";
-    //         cout << "n = " << n 
-    //             << ", forced clauses = " << n 
-    //             << ", extra random clauses = " << extra_clauses << "\n";
-    //         cout << "Target = ";
-    //         for (char ch : target) cout << ch;
-    //         cout << "\n\n";
+    string& chromosome_deep_copy = const_cast<string&>(chromosome);
 
-    //         cout << "=== Clauses (CNF) ===\n";
-    //         for (auto& cl : clauses) {
-    //             cout << "(";
-    //             for (int i = 0; i < 3; ++i) {
-    //                 int idx = cl[i].first;
-    //                 bool pos = cl[i].second;
-    //                 if (!pos) cout << "¬";
-    //                 cout << "x" << idx;
-    //                 if (i < 2) cout << " ∨ ";
-    //             }
-    //             cout << ")\n";
-    //         }
-    //         cout << endl;
-    //     }
+    int segment_length = FTRAP_K;
+    int overlap = 1;
+    double total_fitness = 0.0;
+    int time = 0;
 
-    //     // === 評估滿足子句數 ===
-    //     int sat = 0;
-    //     for (auto& cl : clauses) {
-    //         bool clause_sat = false;
-    //         for (auto& lit : cl) {
-    //             bool val = (chromosome[lit.first] == '1');
-    //             if ((lit.second && val) || (!lit.second && !val)) {
-    //                 clause_sat = true;
-    //                 break;
-    //             }
-    //         }
-    //         if (clause_sat) ++sat;
-    //     }
-    //     return static_cast<double>(sat);
-    // }
+    for (size_t i = 0; i < chromosome_deep_copy.length(); i += segment_length - overlap) {
+        string segment;
+        if (i + segment_length <= chromosome_deep_copy.length()) {
+            segment = chromosome_deep_copy.substr(i, segment_length);
+        } else {
+            segment = chromosome_deep_copy.substr(i) +
+                      chromosome_deep_copy.substr(0, segment_length - (chromosome_deep_copy.length() - i));
+        }
+
+        if (time % 2 == 0) {
+            total_fitness += calculate_segment_fitness(segment, "ftrap");
+        } else {
+            total_fitness += calculate_segment_fitness(segment, "zerotrap");
+        }
+        time++;
+
+        if (i + segment_length >= chromosome_deep_copy.length() + overlap) {
+            break;
+        }
+    }
+    return total_fitness;
+    }else if (method == "1-0_cycftrap_half") {
+    const int FTRAP_K = 6;
+    static bool printed = false;
+    int div = 2; // 與 1-0_cyctrap_half 相同的門檻
+
+    if (!printed) {
+        if (chromosome.length() % (FTRAP_K - 1) != 0) {
+            cerr << "Error: Chromosome length must be a multiple of FTRAP_K-1 for 1-0_cycftrap_half" << endl;
+            exit(1);
+        }
+        cout << "k = " << FTRAP_K << endl;
+        cout << "m = " << chromosome.length() / (FTRAP_K - 1) << endl;
+        cout << "div = " << div << endl;
+        printed = true;
+    }
+
+    string& chromosome_deep_copy = const_cast<string&>(chromosome);
+
+    // 半數限制（沿用你先前的 B 版本）
+    int zero_count = count(chromosome_deep_copy.begin(), chromosome_deep_copy.end(), '0');
+    if (zero_count > static_cast<int>(chromosome_deep_copy.length()) / div) {
+        return -1;
+    }
+
+    int segment_length = FTRAP_K;
+    int overlap = 1;
+    double total_fitness = 0.0;
+    int time = 0;
+
+    for (size_t i = 0; i < chromosome_deep_copy.length(); i += segment_length - overlap) {
+        string segment;
+        if (i + segment_length <= chromosome_deep_copy.length()) {
+            segment = chromosome_deep_copy.substr(i, segment_length);
+        } else {
+            segment = chromosome_deep_copy.substr(i) +
+                      chromosome_deep_copy.substr(0, segment_length - (chromosome_deep_copy.length() - i));
+        }
+
+        if (time % 2 == 0) {
+            total_fitness += calculate_segment_fitness(segment, "ftrap");
+        } else {
+            total_fitness += calculate_segment_fitness(segment, "zerotrap");
+        }
+        time++;
+
+        if (i + segment_length >= chromosome_deep_copy.length() + overlap) {
+            break;
+        }
+    }
+    return total_fitness;
+    }else if (method == "ftrap") {
+
+    // int u = std::count(segment.begin(), segment.end(), '1');
+
+    string& chromosome_deep_copy = const_cast<string&>(chromosome);
+    if ((int)chromosome_deep_copy.size() % 6 != 0) {
+        cerr << "Error: Chromosome length must be a multiple of 6 for ftrap" << endl;
+        exit(1);
+    }
+
+    size_t num_segments = chromosome.length() / 6;
+    double total_fitness = 0.0;
+    for (size_t i = 0; i < num_segments; ++i) {
+        string segment = chromosome.substr(i * 6, 6);
+
+        int u = std::count(segment.begin(), segment.end(), '1');
+        total_fitness += folded_trap6(u);
+    }
+    return total_fitness;
+    }
+
+
+
+
+    
+
+
 
    
     std::cerr << "Error: the problem does not exist!" << std::endl;

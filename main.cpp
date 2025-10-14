@@ -19,22 +19,28 @@ int main(int argc, char* argv[]) {
     if (argc != 7) {
         printf ("./main problem ell detect_eg detect_epi detect_weak show_fitness\n");
         printf ("problem: \n");
-        printf ("     ONEMAX         :  0\n");
-        printf ("     LEADINGONES    :  1\n");
-        printf ("     CTRAP          :  2\n");
-        printf ("     CYCTRAP        :  3\n");
-        printf ("     CNIAH          :  4\n");
-        printf ("     LEADINGONES    :  5\n");
-        printf ("     LEADINGTRAPS   :  6\n");
-        printf ("     MAX3SAT_TEST   :  7\n");
-        printf ("     MAX3SAT_RANDOM :  8\n");
-        printf ("     1-0 CYCTRAP    :  9\n");
-        printf ("     1-0 CYCTRAP HALF:  10\n");
-        printf ("     MAXCUT_RANDOM  :  11\n");
-        printf ("     MAXCUT_TWO     :  12\n");
-        printf ("     MAXCUT_TWO HALF:  13\n");
+        printf ("    ONEMAX           :  0\n");
+        printf ("    LEADINGONES      :  1\n");
+        printf ("    CTRAP            :  2\n");
+        printf ("    CYCTRAP          :  3\n");
+        printf ("    CNIAH            :  4\n");
+        printf ("    LEADINGONES      :  5\n");
+        printf ("    LEADINGTRAPS     :  6\n");
+        printf ("    ==========================\n");
+        printf ("    FRTAP            :  7\n"); 
+        printf ("    CYCFRTAP         :  8\n");
+        printf ("    CYCFRTAP HALF    :  9\n");
+        printf ("    ==========================\n");
+        printf ("    1-0 CYCFRTAP     :  10\n");
+        printf ("    1-0 CYCFRTAP HALF:  11\n");
 
-
+        // printf ("     MAXCUT_RANDOM  :  11\n");
+        // printf ("     MAXCUT_TWO     :  12\n");
+        // printf ("     MAXCUT_TWO HALF:  13\n");
+        // printf ("     1-0 CYCTRAP    :  14\n");
+        // printf ("     1-0 CYCTRAP HALF:  15\n");
+        // printf ("     MAX3SAT_TEST   :  16\n");
+        // printf ("     MAX3SAT_RANDOM :  17\n");
         return 1;
     }
 
@@ -56,13 +62,19 @@ int main(int argc, char* argv[]) {
         case 4: all_chromosomes = generate_chromosomes(ell, "cniah"); break;
         case 5: all_chromosomes = generate_chromosomes(ell, "leadingones"); break;
         case 6: all_chromosomes = generate_chromosomes(ell, "leadingtraps"); break;
-        case 7: all_chromosomes = generate_chromosomes(ell, "max3sat_unit_and_random"); break;
-        case 8: all_chromosomes = generate_chromosomes(ell, "max3sat_random"); break;
-        case 9: all_chromosomes = generate_chromosomes(ell, "1-0_cyctrap"); break;
-        case 10: all_chromosomes = generate_chromosomes(ell, "1-0_cyctrap_half"); break;
-        case 11: all_chromosomes = generate_chromosomes(ell, "maxcut_random"); break;
-        case 12: all_chromosomes = generate_chromosomes(ell, "maxcut_2"); break;
-        case 13: all_chromosomes = generate_chromosomes(ell, "maxcut_2_half"); break;
+        case 7: all_chromosomes = generate_chromosomes(ell, "ftrap"); break;
+        case 8: all_chromosomes = generate_chromosomes(ell, "cycftrap"); break;
+        case 9: all_chromosomes = generate_chromosomes(ell, "cycftrap_half"); break;
+        case 10: all_chromosomes = generate_chromosomes(ell, "1-0_cycftrap"); break;
+        case 11: all_chromosomes = generate_chromosomes(ell, "1-0_cycftrap_half"); break;
+
+        // case 7: all_chromosomes = generate_chromosomes(ell, "max3sat_unit_and_random"); break;
+        // case 8: all_chromosomes = generate_chromosomes(ell, "max3sat_random"); break;
+        // case 9: all_chromosomes = generate_chromosomes(ell, "1-0_cyctrap"); break;
+        // case 10: all_chromosomes = generate_chromosomes(ell, "1-0_cyctrap_half"); break;
+        // case 11: all_chromosomes = generate_chromosomes(ell, "maxcut_random"); break;
+        // case 12: all_chromosomes = generate_chromosomes(ell, "maxcut_2"); break;
+        // case 13: all_chromosomes = generate_chromosomes(ell, "maxcut_2_half"); break;
         default:
             cerr << "Unknown problem: " << problem << endl;
             return 1;
