@@ -11,13 +11,14 @@
 #include "problem.h" 
 #include "eg.h"  
 #include "weak.h" 
+#include "emso.h" 
 
 using namespace std;
 
 int main(int argc, char* argv[]) {
 
-    if (argc != 7) {
-        printf ("./main problem ell detect_eg detect_epi detect_weak show_fitness\n");
+    if (argc != 9) {
+        printf ("./main problem ell detect_eg detect_epi detect_weak show_fitness detect_mso detect_emso\n");
         printf ("problem: \n");
         printf ("    ONEMAX           :  0\n");
         printf ("    LEADINGONES      :  1\n");
@@ -50,6 +51,8 @@ int main(int argc, char* argv[]) {
     int detect_epi = stoi(argv[4]);
     int detect_weak = stoi(argv[5]);
     int show_fitness = stoi(argv[6]);
+    int detect_mso = stoi(argv[7]);
+    int detect_emso = stoi(argv[8]);
 
     int n = pow(2, ell);
 
@@ -231,6 +234,44 @@ int main(int argc, char* argv[]) {
         } else {
             cout << "global optimal is not unique" << endl;
         }
+    }
+
+    if (detect_mso) {
+        cout << "====================" << endl;
+        cout << "mso" << endl;
+        cout << "====================" << endl;
+
+        int mso = 0;
+        for (const auto& chom : chromosomes) {
+            if (chom.second == chromosomes[0].second) {
+                mso++;
+            }
+        }
+        cout << "mso: " << mso << endl;
+        cout << endl;
+    }
+
+    if (detect_emso) {
+        cout << "====================" << endl;
+        cout << "emso" << endl;
+        cout << "====================" << endl;
+
+        std::vector<int> emso_count = emso(ell, 0, chromosomes); // target_index 不重要
+
+        for (int size = 1; size < emso_count.size(); size++) {
+            cout << "#order_" << size << ": " << emso_count[size] << endl;
+        }
+        cout << endl;
+
+
+        // set<string> emso_set;
+        // for (const auto& chom : chromosomes) {
+        //     if (chom.second == chromosomes[0].second) {
+        //         emso_set.insert(chom.first);
+        //     }
+        // }
+        // cout << "emso: " << emso_set.size() << endl;
+        // cout << endl;
     }
 
 
