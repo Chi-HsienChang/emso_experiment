@@ -87,6 +87,8 @@ int main(int argc, char* argv[]) {
 
     auto chromosomes = sample_chromosomes(all_chromosomes, n);
 
+    // auto chromosomes = sample_chromosomes_half(all_chromosomes, n);
+
 
         if (detect_eg) {
         cout << "====================" << endl;
@@ -225,7 +227,7 @@ int main(int argc, char* argv[]) {
         for (const auto& chom : chromosomes) {
             cout << chom.first << " " << chom.second << endl;
             show_count++;
-            if (show_count >= 10000) break;
+            // if (show_count >= 10000) break;
         }
         cout << endl;
 

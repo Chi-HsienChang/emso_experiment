@@ -8,14 +8,40 @@ using namespace std;
 
 vector<pair<string, double>> generate_chromosomes(int ell, const string& method) {
     cout << method << " with ell = " << ell << endl;
+     vector<pair<string, double>> chromosomes;
 
-    vector<pair<string, double>> chromosomes;
-    int num_combinations = pow(2, ell);
+    if (method == "cycftrap_half") {
+       
+        int num_combinations = pow(2, ell);
 
-    for (int i = 0; i < num_combinations; ++i) {
-        string chromosome = bitset<32>(i).to_string().substr(32 - ell);
-        double fitness = calculate_fitness(chromosome, method);
-        chromosomes.push_back({chromosome, fitness});
+        for (int i = 0; i < num_combinations; ++i) {
+
+            
+            string chromosome = bitset<32>(i).to_string().substr(32 - ell);
+
+            // 計算 '1' 的個數
+            int ones = std::count(chromosome.begin(), chromosome.end(), '1');
+
+            // 若 1 的個數 > ell / 2，就跳過這個染色體
+            if (ones <= ell / 2) {
+                continue;
+            }
+            double fitness = calculate_fitness(chromosome, method);
+            chromosomes.push_back({chromosome, fitness});
+            // cout << chromosome << " : " << fitness << endl;
+        }
+
+        
+    }else{
+
+        int num_combinations = pow(2, ell);
+
+        for (int i = 0; i < num_combinations; ++i) {
+            string chromosome = bitset<32>(i).to_string().substr(32 - ell);
+            double fitness = calculate_fitness(chromosome, method);
+            chromosomes.push_back({chromosome, fitness});
+        }
+      
     }
     return chromosomes;
 }

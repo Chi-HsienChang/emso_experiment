@@ -11,14 +11,14 @@ using namespace std;
 // #define TRAP_high 5
 // #define TRAP_low 4
 
-// #define TRAP_K 4
-// #define TRAP_high 4
-// #define TRAP_low 3
+#define TRAP_K 4
+#define TRAP_high 4
+#define TRAP_low 3
 
 
-#define TRAP_K 5
-#define TRAP_high 5
-#define TRAP_low 4
+// #define TRAP_K 5
+// #define TRAP_high 5
+// #define TRAP_low 4
 
 // #define TRAP_K 5
 // #define TRAP_high 1
